@@ -1,0 +1,51 @@
+version: "2"
+services:
+    proxy:
+        image: nginx:1.17.1
+        volumes:
+            - ./proxy/etc/nginx/conf.d:/etc/nginx/conf.d
+        ports:
+            - 10080:80
+        links:
+            - api
+    api:
+        image: python:3.7.3
+        volumes:
+            - ./api/:/opt/api
+        working_dir: /opt/api
+        expose:
+            - 3031
+        command: bash -c "source venv/bin/activate && uwsgi --ini uwsgi.ini"
+    api-debug:
+        image: python:3.7.3
+        environment:
+            FLASK_APP: app/app.py
+            FLASK_DEBUG: 1
+        volumes:
+            - ./api/:/opt/api
+        ports:
+            - 15000:5000
+        working_dir: /opt/api
+        command: bash -c "source venv/bin/activate && flask run --host=0.0.0.0"
+        links:
+            - db
+            - cache
+            - s3
+    db:
+        image: mysql:8.0.16
+        environment:
+            MYSQL_ROOT_PASSWORD: secret
+            MYSQL_DATABASE: sample
+            MYSQL_USER: sample
+            MYSQL_PASSWORD: secret
+        command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    cache:
+        image: redis:5.0.5
+    s3:
+        image: minio/minio:RELEASE.2019-07-17T22-54-12Z
+        environment:
+            MINIO_ACCESS_KEY: accesskey
+            MINIO_SECRET_KEY: secretsecret
+        volumes:
+            - ./s3/data:/data
+        command: server /data

@@ -1,0 +1,18 @@
+version: "2"
+services:
+    proxy:
+        image: nginx:1.17.1
+    api:
+        image: python:3.7.3
+        volumes:
+            - ./api/:/opt/api
+        working_dir: /opt/api
+        env_file:
+            - ./api/${ENV}.env
+        entrypoint: "bash /opt/api/${ENV}/docker-entrypoint.sh"
+    db:
+        image: mysql:8.0.16
+    cache:
+        image: redis:5.0.5
+    s3:
+        image: minio/minio:RELEASE.2019-07-17T22-54-12Z
